@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "libraries/example.h"
+#include "libraries/Converter.h"
 
 using std::cout;
 
 int main() {
-    example();
+    Converter::convert("files/in.txt", "files/out.txt");
 
     return 0;
 }
