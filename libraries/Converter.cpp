@@ -16,15 +16,22 @@ bool Converter::convert(string file_in, string file_out) {
 
     Stack<char> stack;
     char symbol;
+    bool wasNum = false;
 
     stack.push('(');
     while (fin >> symbol) {
-        if ((symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9')) {
+        if ((symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') || symbol == '.') {
             fout << symbol;
+            wasNum = true;
         } else if (symbol == '(') {
             stack.push('(');
         } else if (symbol == ')') {
             symbol = stack.pop();
+
+            if(symbol != '(' && wasNum) {
+                fout << ',';
+                wasNum = false;
+            }
 
             while (symbol != '(') {
                 fout << symbol;
@@ -32,6 +39,11 @@ bool Converter::convert(string file_in, string file_out) {
             }
         } else if (is_operation(symbol)) {
             char temp = stack.pop();
+
+            if(wasNum) {
+                fout << ',';
+                wasNum = false;
+            }
 
             while (temp != '(' && priority(temp) >= priority(symbol)) {
                 fout << temp;
