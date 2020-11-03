@@ -1,17 +1,19 @@
 #include <iostream>
-
+#include <fstream>
 #include "libraries/Converter.h"
 
 using std::cout;
+using std::ifstream;
+using std::ofstream;
 
 int main() {
-    bool res = Converter::convert("files/in.txt", "files/out.txt");
+    ifstream fin("files/in.txt");
+    string data;
+    getline(fin, data);
 
-    if(res) {
-        cout << "Программа успешно завершена";
-    } else {
-        cout << "Ошибка в работе программы";
-    }
+    data = Converter::convert(data);
+
+    cout << data;
 
     return 0;
 }
