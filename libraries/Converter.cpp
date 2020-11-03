@@ -1,27 +1,17 @@
 #include "Converter.h"
 #include "Stack.h"
-#include <fstream>
 
-using std::ifstream;
-using std::ofstream;
 using std::string;
 
-bool Converter::convert(string file_in, string file_out) {
-    ifstream fin(file_in);
-    ofstream fout(file_out);
-
-    if (!fin.is_open() || !fout.is_open()) {
-        return false;
-    }
-
+string Converter::convert(string str_in) {
     Stack<char> stack;
-    char symbol;
     bool wasNum = false;
+    string result;
 
     stack.push('(');
-    while (fin >> symbol) {
+    for (char symbol : str_in) {
         if ((symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') || symbol == '.') {
-            fout << symbol;
+            result.push_back(symbol);
             wasNum = true;
         } else if (symbol == '(') {
             stack.push('(');
@@ -29,24 +19,24 @@ bool Converter::convert(string file_in, string file_out) {
             symbol = stack.pop();
 
             if(symbol != '(' && wasNum) {
-                fout << ',';
+                result.push_back(',');
                 wasNum = false;
             }
 
             while (symbol != '(') {
-                fout << symbol;
+                result.push_back(symbol);
                 symbol = stack.pop();
             }
         } else if (is_operation(symbol)) {
             char temp = stack.pop();
 
             if(wasNum) {
-                fout << ',';
+                result.push_back(',');
                 wasNum = false;
             }
 
             while (temp != '(' && priority(temp) >= priority(symbol)) {
-                fout << temp;
+                result.push_back(temp);
                 temp = stack.pop();
             }
 
@@ -55,15 +45,14 @@ bool Converter::convert(string file_in, string file_out) {
         }
     }
 
-    symbol = stack.pop();
+    char symbol = stack.pop();
 
     while (symbol != '(') {
-        fout << symbol;
+        result.push_back(symbol);
         symbol = stack.pop();
     }
 
-    fin.close();
-    fout.close();
+    return result;
 }
 
 unsigned short int Converter::priority(char sign) {

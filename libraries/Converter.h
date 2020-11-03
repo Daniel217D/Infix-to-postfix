@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-//#include "Stack.h"
 
 using std::string;
 
@@ -10,5 +9,5 @@ private:
     static unsigned short int priority(char sign);
     static bool is_operation(char sign);
 public:
-    static bool convert(string file_in, string file_out);
+    static string convert(string file_in);
 };
