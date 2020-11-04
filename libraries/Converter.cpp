@@ -1,16 +1,18 @@
 #include "Converter.h"
 #include "Stack.h"
+#include "Tree.h"
 
 using std::string;
 
-string Converter::convert(string str_in) {
+string Converter::convertToRPN(const string &str_in) {
     Stack<char> stack;
     bool wasNum = false;
     string result;
 
     stack.push('(');
     for (char symbol : str_in) {
-        if ((symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') || symbol == '.') {
+        if ((symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') ||
+            symbol == '.') {
             result.push_back(symbol);
             wasNum = true;
         } else if (symbol == '(') {
@@ -18,25 +20,27 @@ string Converter::convert(string str_in) {
         } else if (symbol == ')') {
             symbol = stack.pop();
 
-            if(symbol != '(' && wasNum) {
-                result.push_back(',');
+            if (symbol != '(' && wasNum) {
+                result.push_back(' ');
                 wasNum = false;
             }
 
             while (symbol != '(') {
                 result.push_back(symbol);
+                result.push_back(' ');
                 symbol = stack.pop();
             }
-        } else if (is_operation(symbol)) {
+        } else if (isOperation(symbol)) {
             char temp = stack.pop();
 
-            if(wasNum) {
-                result.push_back(',');
+            if (wasNum) {
+                result.push_back(' ');
                 wasNum = false;
             }
 
             while (temp != '(' && priority(temp) >= priority(symbol)) {
                 result.push_back(temp);
+                result.push_back(' ');
                 temp = stack.pop();
             }
 
@@ -45,14 +49,184 @@ string Converter::convert(string str_in) {
         }
     }
 
+    if (wasNum) {
+        result.push_back(' ');
+    }
+
     char symbol = stack.pop();
 
     while (symbol != '(') {
         result.push_back(symbol);
+        result.push_back(' ');
         symbol = stack.pop();
     }
 
     return result;
+}
+
+BiNode<string> *Converter::convertToTree(const string &str_in) {
+    Stack<BiNode<string> *> result;
+    Stack<char> signs;
+    string num;
+
+    signs.push('(');
+    for (char symbol : str_in) {
+        if (isVariable(symbol)) {
+            num.push_back(symbol);
+        } else if (symbol == '(') {
+            signs.push('(');
+        } else if (symbol == ')') {
+            symbol = signs.pop();
+
+            if (symbol != '(' && num.length() != 0) {
+                result.push(new BiNode<string>(num));
+                num = "";
+            }
+
+            while (symbol != '(') {
+                BiNode<string> *r = result.pop();
+                BiNode<string> *l = result.pop();
+                string s_temp;
+                s_temp.push_back(symbol);
+                result.push(new BiNode<string>(s_temp, l, r));
+                symbol = signs.pop();
+            }
+        } else if (isOperation(symbol)) {
+            char temp = signs.pop();
+
+            if (num.length() != 0) {
+                result.push(new BiNode<string>(num));
+                num = "";
+            }
+
+            while (temp != '(' && priority(temp) >= priority(symbol)) {
+                BiNode<string> *r = result.pop();
+                BiNode<string> *l;
+                //negative numbers
+                if (!result.is_empty()) {
+                    l = result.pop();
+                } else {
+                    l = new BiNode<string>("0");
+                }
+
+                string s_temp;
+                s_temp.push_back(temp);
+                result.push(new BiNode<string>(s_temp, l, r));
+                temp = signs.pop();
+            }
+
+            signs.push(temp);
+            signs.push(symbol);
+        }
+    }
+
+    if (num.length() != 0) {
+        result.push(new BiNode<string>(num));
+        num = "";
+    }
+
+    char symbol = signs.pop();
+
+    while (symbol != '(') {
+        BiNode<string> *r = result.pop();
+        BiNode<string> *l = result.pop();
+        string s_temp;
+        s_temp.push_back(symbol);
+        result.push(new BiNode<string>(s_temp, l, r));
+        symbol = signs.pop();
+    }
+
+    return result.pop();
+}
+
+BiNode<string> *Converter::convertToSimplifiedTree(const string &str_in) {
+    return simplifyTree(convertToTree(str_in));
+}
+
+BiNode<string> *Converter::simplifyTree(BiNode<string> *tree) {
+    if (tree->getLeft() == nullptr && tree->getRight() == nullptr) {
+        return new BiNode<string>(tree->getValue());
+        //Если справа "0" или "1"
+    } else if (isVariable(tree->getRight()->getValue()) &&
+               (tree->getRight()->getValue() == "0" || tree->getRight()->getValue() == "1")) {
+        //"0" справа от знаков "+", "-", "*", "/", "^"
+        if (tree->getRight()->getValue() == "0" &&
+            (tree->getValue() == "+" || tree->getValue() == "-" || tree->getValue() == "*" || tree->getValue() == "/" ||
+             tree->getValue() == "^")) {
+            if (tree->getValue() == "*") {
+                return new BiNode<string>("0");
+            } else if (tree->getValue() == "+" || tree->getValue() == "-") {
+                return new BiNode<string>(simplifyTree(tree->getLeft()));
+            } else if (tree->getValue() == "/") {
+                return new BiNode<string>("Inf");
+            } else if (tree->getValue() == "^") {
+                return new BiNode<string>("1");
+            }
+            //"1" справа от знаков "*", "/", "^"
+        } else if (tree->getRight()->getValue() == "1" &&
+                   (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^")) {
+            if (tree->getValue() == "*" || tree->getValue() == "/") {
+                return new BiNode<string>(tree->getLeft());
+            } else if (tree->getValue() == "^") {
+                return new BiNode<string>(tree->getLeft());
+            }
+        }
+        //Если слева "0" или "1"
+    } else if (isVariable(tree->getLeft()->getValue()) &&
+               (tree->getLeft()->getValue() == "0" || tree->getLeft()->getValue() == "1")) {
+        //"0" слева от знаков "+", "*", "/", "^"
+        if (tree->getLeft()->getValue() == "0" &&
+            (tree->getValue() == "+" || tree->getValue() == "*" || tree->getValue() == "/" ||
+             tree->getValue() == "^")) {
+            if (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^") {
+                return new BiNode<string>("0");
+            } else if (tree->getValue() == "+") {
+                return new BiNode<string>(simplifyTree(tree->getRight()));
+            }
+            //"1" слева от знаков "*", "^"
+        } else if (tree->getLeft()->getValue() == "1" && (tree->getValue() == "*" || tree->getValue() == "^")) {
+            if (tree->getValue() == "*") {
+                return new BiNode<string>(simplifyTree(tree->getRight()));
+            } else if (tree->getValue() == "^") {
+                return new BiNode<string>("1");
+            }
+        }
+
+    } else {
+        auto r = new BiNode<string>(tree->getValue(), simplifyTree(tree->getLeft()), simplifyTree(tree->getRight()));
+
+//        if(r->getLeft() && r->getLeft()->getLeft() == nullptr) {
+//            return simplifyTree(r);
+//        }
+//        return r;
+    }
+}
+
+string Converter::convertToString(BiNode<string> *tree) {
+    if (tree->getLeft() == nullptr && tree->getRight() == nullptr) {
+        return tree->getValue();
+    } else {
+        string r = "";
+
+        unsigned short int mp = tree->getLeft()->getLeft() ? minPriority(tree->getLeft()) : 4;
+        unsigned short int cp = priority(tree->getValue());
+        if (mp < cp) {
+            r += ("(" + convertToString(tree->getLeft()) + ")");
+        } else {
+            r += convertToString(tree->getLeft());
+        }
+
+        r += tree->getValue();
+
+        mp = tree->getRight()->getRight() ? minPriority(tree->getRight()) : 4;
+        if (mp <= cp) {
+            r += ("(" + convertToString(tree->getRight()) + ")");
+        } else {
+            r += convertToString(tree->getRight());
+        }
+
+        return r;
+    }
 }
 
 unsigned short int Converter::priority(char sign) {
@@ -79,7 +253,11 @@ unsigned short int Converter::priority(char sign) {
     return result;
 }
 
-bool Converter::is_operation(char sign) {
+unsigned short int Converter::priority(string sign) {
+    return priority(sign[0]);
+}
+
+bool Converter::isOperation(char sign) {
     bool result = false;
 
     switch (sign) {
@@ -95,4 +273,29 @@ bool Converter::is_operation(char sign) {
     }
 
     return result;
+}
+
+bool Converter::isOperation(string sign) {
+    return sign.length() == 0 && isOperation(sign[0]);
+}
+
+bool Converter::isVariable(char symbol) {
+    return (symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') ||
+           symbol == '.';
+}
+
+bool Converter::isVariable(string symbols) {
+    return symbols.length() >= 2 || (symbols.length() >= 1 && isVariable(symbols[0]));
+}
+
+unsigned short int Converter::minPriority(BiNode<string> *tree) {
+    if (tree->getLeft() == nullptr || tree->getLeft()->getLeft() == nullptr) {
+        return priority(tree->getValue());
+    }
+
+    unsigned short int l = minPriority(tree->getLeft());
+    unsigned short int r = minPriority(tree->getRight());
+    unsigned short int m = priority(tree->getValue());
+
+    return l < r ? (l < m ? l : m) : (r < m ? r : m);
 }
