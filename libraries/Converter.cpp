@@ -3,6 +3,7 @@
 #include "Tree.h"
 
 using std::string;
+using std::to_string;
 
 string Converter::convertToRPN(const string &str_in) {
     Stack<char> stack;
@@ -143,32 +144,35 @@ BiNode<string> *Converter::convertToSimplifiedTree(const string &str_in) {
     return simplifyTree(convertToTree(str_in));
 }
 
-BiNode<string> *Converter::simplifyTree(BiNode<string> *tree) {
-    if (tree->getLeft() == nullptr && tree->getRight() == nullptr) {
-        return new BiNode<string>(tree->getValue());
+string Converter::simplifyExpression(const string& str_in) {
+    return convertToString(simplifyTree(convertToTree(str_in)));
+}
+
+BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSimplification) {
+    BiNode<string> *res = nullptr;
+
+    if (isVariable(tree->getValue())) {
+        res =  new BiNode<string>(tree->getValue());
         //Если справа "0" или "1"
     } else if (isVariable(tree->getRight()->getValue()) &&
                (tree->getRight()->getValue() == "0" || tree->getRight()->getValue() == "1")) {
-        //"0" справа от знаков "+", "-", "*", "/", "^"
+        //"0" справа от знаков "+", "-", "*", "^"
         if (tree->getRight()->getValue() == "0" &&
-            (tree->getValue() == "+" || tree->getValue() == "-" || tree->getValue() == "*" || tree->getValue() == "/" ||
-             tree->getValue() == "^")) {
+            (tree->getValue() == "+" || tree->getValue() == "-" || tree->getValue() == "*" || tree->getValue() == "^")) {
             if (tree->getValue() == "*") {
-                return new BiNode<string>("0");
+                res =  new BiNode<string>("0");
             } else if (tree->getValue() == "+" || tree->getValue() == "-") {
-                return new BiNode<string>(simplifyTree(tree->getLeft()));
-            } else if (tree->getValue() == "/") {
-                return new BiNode<string>("Inf");
+                res =  new BiNode<string>(simplifyTree(tree->getLeft()));
             } else if (tree->getValue() == "^") {
-                return new BiNode<string>("1");
+                res =  new BiNode<string>("1");
             }
             //"1" справа от знаков "*", "/", "^"
         } else if (tree->getRight()->getValue() == "1" &&
                    (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^")) {
             if (tree->getValue() == "*" || tree->getValue() == "/") {
-                return new BiNode<string>(tree->getLeft());
+                res =  new BiNode<string>(tree->getLeft());
             } else if (tree->getValue() == "^") {
-                return new BiNode<string>(tree->getLeft());
+                res =  new BiNode<string>(tree->getLeft());
             }
         }
         //Если слева "0" или "1"
@@ -179,27 +183,35 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree) {
             (tree->getValue() == "+" || tree->getValue() == "*" || tree->getValue() == "/" ||
              tree->getValue() == "^")) {
             if (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^") {
-                return new BiNode<string>("0");
+                res =  new BiNode<string>("0");
             } else if (tree->getValue() == "+") {
-                return new BiNode<string>(simplifyTree(tree->getRight()));
+                res =  new BiNode<string>(simplifyTree(tree->getRight()));
             }
             //"1" слева от знаков "*", "^"
         } else if (tree->getLeft()->getValue() == "1" && (tree->getValue() == "*" || tree->getValue() == "^")) {
             if (tree->getValue() == "*") {
-                return new BiNode<string>(simplifyTree(tree->getRight()));
+                res =  new BiNode<string>(simplifyTree(tree->getRight()));
             } else if (tree->getValue() == "^") {
-                return new BiNode<string>("1");
+                res =  new BiNode<string>("1");
             }
         }
 
-    } else {
-        auto r = new BiNode<string>(tree->getValue(), simplifyTree(tree->getLeft()), simplifyTree(tree->getRight()));
-
-//        if(r->getLeft() && r->getLeft()->getLeft() == nullptr) {
-//            return simplifyTree(r);
-//        }
-//        return r;
+//    } if(isNumericalVariable(tree->getLeft()->getValue()) && isNumericalVariable(tree->getRight()->getValue())) {
+//        int l = strToInt(tree->getLeft()->getValue());
+//        int r = strToInt(tree->getRight()->getValue());
+//        return new BiNode<string>(to_string(doMath(tree->getValue(), l,r)));
     }
+
+    if(res == nullptr) {
+        res = new BiNode<string>(tree->getValue(), simplifyTree(tree->getLeft()), simplifyTree(tree->getRight()));
+
+        //Проверка на то что слева или справа появилась константа на которую можно упростить
+        if(!removeLastSimplification && (isVariable(res->getLeft()->getValue()) || isVariable(res->getRight()->getValue()))) {
+            res =  simplifyTree(res, true);
+        }
+    }
+
+    return res;
 }
 
 string Converter::convertToString(BiNode<string> *tree) {
@@ -275,9 +287,9 @@ bool Converter::isOperation(char sign) {
     return result;
 }
 
-bool Converter::isOperation(string sign) {
-    return sign.length() == 0 && isOperation(sign[0]);
-}
+//bool Converter::isOperation(string sign) {
+//    return sign.length() == 1 && isOperation(sign[0]);
+//}
 
 bool Converter::isVariable(char symbol) {
     return (symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') ||
@@ -287,6 +299,20 @@ bool Converter::isVariable(char symbol) {
 bool Converter::isVariable(string symbols) {
     return symbols.length() >= 2 || (symbols.length() >= 1 && isVariable(symbols[0]));
 }
+
+//bool Converter::isNumericalVariable(string symbols) {
+//    bool res = true;
+//
+//    if(symbols[0] == '-' && symbols.length() == 1) {
+//        res = false;
+//    } else {
+//        for (unsigned int i = 0 + (symbols[0] == '-'); i < symbols.length() && res; ++i) {
+//            res = symbols[i] >= '0' && symbols[i] <= '9';
+//        }
+//    }
+//
+//    return res;
+//}
 
 unsigned short int Converter::minPriority(BiNode<string> *tree) {
     if (tree->getLeft() == nullptr || tree->getLeft()->getLeft() == nullptr) {
@@ -299,3 +325,48 @@ unsigned short int Converter::minPriority(BiNode<string> *tree) {
 
     return l < r ? (l < m ? l : m) : (r < m ? r : m);
 }
+
+//int Converter::strToInt(const string& str) {
+//    int res = 0;
+//    unsigned int factor = 1;
+//
+//    for (int i = str.length() - 1; i >= 0 + (str[0] == '-'); --i) {
+//        res += (str[i] - '0') * factor;
+//    }
+//
+//    return str[0] == '-' ? -res : res;
+//}
+
+//int Converter::doMath(const string& str, int l, int r) {
+//    int res = 0;
+//
+//    switch (str[0]) {
+//        case '^':
+//            res = pow(l,r);
+//            break;
+//        case '*':
+//            res = l * r;
+//            break;
+//        case ':':
+//        case '/':
+//            res = l / r;
+//            break;
+//        case '+':
+//            res = l + r;
+//            break;
+//        case '-': {
+//            res = l - r;
+//            break;
+//        }
+//    }
+//
+//    return res;
+//}
+
+//int Converter::pow(int number, unsigned int exp) {
+//    int result = 1;
+//    for (unsigned int i = 0; i < exp; ++i) {
+//        result *= number;
+//    }
+//    return result;
+//}
