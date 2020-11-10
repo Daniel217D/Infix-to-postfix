@@ -9,7 +9,7 @@ private:
     static unsigned short int priority(char sign);
     static unsigned short int priority(string sign);
     static bool isOperation(char sign);
-//    static bool isOperation(string sign);
+    static bool isOperation(string sign);
     static bool isVariable(char symbol);
     static bool isVariable(string symbols);
 //    static bool isNumericalVariable(string symbols);

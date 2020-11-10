@@ -86,7 +86,13 @@ BiNode<string> *Converter::convertToTree(const string &str_in) {
 
             while (symbol != '(') {
                 BiNode<string> *r = result.pop();
-                BiNode<string> *l = result.pop();
+                BiNode<string> *l;
+                //negative numbers
+                if (!result.is_empty()) {
+                    l = result.pop();
+                } else {
+                    l = new BiNode<string>("0");
+                }
                 string s_temp;
                 s_temp.push_back(symbol);
                 result.push(new BiNode<string>(s_temp, l, r));
@@ -130,7 +136,13 @@ BiNode<string> *Converter::convertToTree(const string &str_in) {
 
     while (symbol != '(') {
         BiNode<string> *r = result.pop();
-        BiNode<string> *l = result.pop();
+        BiNode<string> *l;
+        //negative numbers
+        if (!result.is_empty()) {
+            l = result.pop();
+        } else {
+            l = new BiNode<string>("0");
+        }
         string s_temp;
         s_temp.push_back(symbol);
         result.push(new BiNode<string>(s_temp, l, r));
@@ -215,12 +227,12 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
 }
 
 string Converter::convertToString(BiNode<string> *tree) {
-    if (tree->getLeft() == nullptr && tree->getRight() == nullptr) {
+    if (isVariable(tree->getValue())) {
         return tree->getValue();
     } else {
         string r = "";
 
-        unsigned short int mp = tree->getLeft()->getLeft() ? minPriority(tree->getLeft()) : 4;
+        unsigned short int mp = isOperation(tree->getLeft()->getValue()) ? minPriority(tree->getLeft()) : 4;
         unsigned short int cp = priority(tree->getValue());
         if (mp < cp) {
             r += ("(" + convertToString(tree->getLeft()) + ")");
@@ -230,7 +242,7 @@ string Converter::convertToString(BiNode<string> *tree) {
 
         r += tree->getValue();
 
-        mp = tree->getRight()->getRight() ? minPriority(tree->getRight()) : 4;
+        mp = isOperation(tree->getRight()->getValue()) ? minPriority(tree->getRight()) : 4;
         if (mp <= cp) {
             r += ("(" + convertToString(tree->getRight()) + ")");
         } else {
@@ -287,9 +299,9 @@ bool Converter::isOperation(char sign) {
     return result;
 }
 
-//bool Converter::isOperation(string sign) {
-//    return sign.length() == 1 && isOperation(sign[0]);
-//}
+bool Converter::isOperation(string sign) {
+    return sign.length() == 1 && isOperation(sign[0]);
+}
 
 bool Converter::isVariable(char symbol) {
     return (symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z') || (symbol >= '0' && symbol <= '9') ||
@@ -315,12 +327,12 @@ bool Converter::isVariable(string symbols) {
 //}
 
 unsigned short int Converter::minPriority(BiNode<string> *tree) {
-    if (tree->getLeft() == nullptr || tree->getLeft()->getLeft() == nullptr) {
+    if (isVariable(tree->getLeft()->getValue()) && isVariable(tree->getRight()->getValue())) {
         return priority(tree->getValue());
     }
 
-    unsigned short int l = minPriority(tree->getLeft());
-    unsigned short int r = minPriority(tree->getRight());
+    unsigned short int l = isOperation(tree->getLeft()->getValue()) ? minPriority(tree->getLeft()) : 4;
+    unsigned short int r = isOperation(tree->getRight()->getValue()) ? minPriority(tree->getRight()) : 4;
     unsigned short int m = priority(tree->getValue());
 
     return l < r ? (l < m ? l : m) : (r < m ? r : m);
