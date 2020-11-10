@@ -9,16 +9,15 @@ using std::ofstream;
 
 int main() {
     ifstream fin("files/in.txt");
+    ofstream fout("files/out.txt");
     string data;
-    getline(fin, data);
-    //TODO ОНО ПАДАЕТ ПРИ ТЕКУЩЕМ ВВОДЕ, ХЗ ПОЧЕМУ, !!БАГИ!!
-    BiNode<string> * f1 = Converter::convertToSimplifiedTree(data);
-    cout << Converter::convertToRPN(data) << "\n";
-    cout << Converter::convertToString(f1);
-//    f1 = Converter::simplifyTree(f1);
-//    auto f2 = new BiNode<string>(f1);
-//    data = Converter::convertToRPN(data);
-//    cout << data;
 
+    while(!fin.eof()) {
+        getline(fin, data);
+        fout << Converter::simplifyExpression(data) << "\n";
+    }
+
+    fin.close();
+    fout.close();
     return 0;
 }
