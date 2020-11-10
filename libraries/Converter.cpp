@@ -190,14 +190,20 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
         //Если слева "0" или "1"
     } else if (isVariable(tree->getLeft()->getValue()) &&
                (tree->getLeft()->getValue() == "0" || tree->getLeft()->getValue() == "1")) {
-        //"0" слева от знаков "+", "*", "/", "^"
+        //"0" слева от знаков "+", "-", "*", "/", "^"
         if (tree->getLeft()->getValue() == "0" &&
-            (tree->getValue() == "+" || tree->getValue() == "*" || tree->getValue() == "/" ||
+            (tree->getValue() == "+" || tree->getValue() == "-" || tree->getValue() == "*" || tree->getValue() == "/" ||
              tree->getValue() == "^")) {
             if (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^") {
                 res =  new BiNode<string>("0");
             } else if (tree->getValue() == "+") {
                 res =  new BiNode<string>(simplifyTree(tree->getRight()));
+            } else if (tree->getValue() == "-" && isVariable(tree->getRight()->getValue())) {
+                if(tree->getRight()->getValue()[0] == '-') {
+                    res = new BiNode<string>(tree->getRight()->getValue().substr(1, tree->getRight()->getValue().length() - 1));
+                } else {
+                    res = new BiNode<string>("-"+tree->getRight()->getValue());
+                }
             }
             //"1" слева от знаков "*", "^"
         } else if (tree->getLeft()->getValue() == "1" && (tree->getValue() == "*" || tree->getValue() == "^")) {
