@@ -166,6 +166,11 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
     if (isVariable(tree->getValue())) {
         res =  new BiNode<string>(tree->getValue());
         //Если справа "0" или "1"
+
+    } else if(isNumericalVariable(tree->getLeft()->getValue()) && isNumericalVariable(tree->getRight()->getValue())) {
+        int l = strToInt(tree->getLeft()->getValue());
+        int r = strToInt(tree->getRight()->getValue());
+        res = new BiNode<string>(to_string(doMath(tree->getValue(), l,r)));
     } else if (isVariable(tree->getRight()->getValue()) &&
                (tree->getRight()->getValue() == "0" || tree->getRight()->getValue() == "1")) {
         //"0" справа от знаков "+", "-", "*", "^"
@@ -213,11 +218,6 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
                 res =  new BiNode<string>("1");
             }
         }
-
-//    } if(isNumericalVariable(tree->getLeft()->getValue()) && isNumericalVariable(tree->getRight()->getValue())) {
-//        int l = strToInt(tree->getLeft()->getValue());
-//        int r = strToInt(tree->getRight()->getValue());
-//        return new BiNode<string>(to_string(doMath(tree->getValue(), l,r)));
     }
 
     if(res == nullptr) {
@@ -318,19 +318,19 @@ bool Converter::isVariable(string symbols) {
     return symbols.length() >= 2 || (symbols.length() >= 1 && isVariable(symbols[0]));
 }
 
-//bool Converter::isNumericalVariable(string symbols) {
-//    bool res = true;
-//
-//    if(symbols[0] == '-' && symbols.length() == 1) {
-//        res = false;
-//    } else {
-//        for (unsigned int i = 0 + (symbols[0] == '-'); i < symbols.length() && res; ++i) {
-//            res = symbols[i] >= '0' && symbols[i] <= '9';
-//        }
-//    }
-//
-//    return res;
-//}
+bool Converter::isNumericalVariable(string symbols) {
+    bool res = true;
+
+    if(symbols[0] == '-' && symbols.length() == 1) {
+        res = false;
+    } else {
+        for (unsigned int i = 0 + (symbols[0] == '-'); i < symbols.length() && res; ++i) {
+            res = symbols[i] >= '0' && symbols[i] <= '9';
+        }
+    }
+
+    return res;
+}
 
 unsigned short int Converter::minPriority(BiNode<string> *tree) {
     if (isVariable(tree->getLeft()->getValue()) && isVariable(tree->getRight()->getValue())) {
@@ -344,47 +344,47 @@ unsigned short int Converter::minPriority(BiNode<string> *tree) {
     return l < r ? (l < m ? l : m) : (r < m ? r : m);
 }
 
-//int Converter::strToInt(const string& str) {
-//    int res = 0;
-//    unsigned int factor = 1;
-//
-//    for (int i = str.length() - 1; i >= 0 + (str[0] == '-'); --i) {
-//        res += (str[i] - '0') * factor;
-//    }
-//
-//    return str[0] == '-' ? -res : res;
-//}
+int Converter::strToInt(const string& str) {
+    int res = 0;
+    unsigned int factor = 1;
 
-//int Converter::doMath(const string& str, int l, int r) {
-//    int res = 0;
-//
-//    switch (str[0]) {
-//        case '^':
-//            res = pow(l,r);
-//            break;
-//        case '*':
-//            res = l * r;
-//            break;
-//        case ':':
-//        case '/':
-//            res = l / r;
-//            break;
-//        case '+':
-//            res = l + r;
-//            break;
-//        case '-': {
-//            res = l - r;
-//            break;
-//        }
-//    }
-//
-//    return res;
-//}
+    for (int i = str.length() - 1; i >= 0 + (str[0] == '-'); --i) {
+        res += (str[i] - '0') * factor;
+    }
 
-//int Converter::pow(int number, unsigned int exp) {
-//    int result = 1;
-//    for (unsigned int i = 0; i < exp; ++i) {
-//        result *= number;
-//    }
-//    return result;
-//}
+    return str[0] == '-' ? -res : res;
+}
+
+int Converter::doMath(const string& str, int l, int r) {
+    int res = 0;
+
+    switch (str[0]) {
+        case '^':
+            res = pow(l,r);
+            break;
+        case '*':
+            res = l * r;
+            break;
+        case ':':
+        case '/':
+            res = l / r;
+            break;
+        case '+':
+            res = l + r;
+            break;
+        case '-': {
+            res = l - r;
+            break;
+        }
+    }
+
+    return res;
+}
+
+int Converter::pow(int number, unsigned int exp) {
+    int result = 1;
+    for (unsigned int i = 0; i < exp; ++i) {
+        result *= number;
+    }
+    return result;
+}
