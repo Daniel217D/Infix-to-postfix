@@ -22,6 +22,7 @@ public:
     }
 
     ~BiNode() {
+        delete left;
         delete right;
     }
 
