@@ -186,7 +186,7 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
             if (tree->getValue() == "*") {
                 res =  new BiNode<string>("0");
             } else if (tree->getValue() == "+" || tree->getValue() == "-") {
-                res =  new BiNode<string>(simplifyTree(tree->getLeft()));
+                res =  simplifyTree(tree->getLeft());
             } else if (tree->getValue() == "^") {
                 res =  new BiNode<string>("1");
             }
@@ -194,9 +194,9 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
         } else if (tree->getRight()->getValue() == "1" &&
                    (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^")) {
             if (tree->getValue() == "*" || tree->getValue() == "/") {
-                res =  new BiNode<string>(tree->getLeft());
+                res =  tree->getLeft();
             } else if (tree->getValue() == "^") {
-                res =  new BiNode<string>(tree->getLeft());
+                res =  tree->getLeft();
             }
         }
         //Если слева "0" или "1"
@@ -209,7 +209,7 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
             if (tree->getValue() == "*" || tree->getValue() == "/" || tree->getValue() == "^") {
                 res =  new BiNode<string>("0");
             } else if (tree->getValue() == "+") {
-                res =  new BiNode<string>(simplifyTree(tree->getRight()));
+                res =  simplifyTree(tree->getRight());
             } else if (tree->getValue() == "-" && isVariable(tree->getRight()->getValue())) {
                 if(tree->getRight()->getValue()[0] == '-') {
                     res = new BiNode<string>(tree->getRight()->getValue().substr(1, tree->getRight()->getValue().length() - 1));
@@ -220,7 +220,7 @@ BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSim
             //"1" слева от знаков "*", "^"
         } else if (tree->getLeft()->getValue() == "1" && (tree->getValue() == "*" || tree->getValue() == "^")) {
             if (tree->getValue() == "*") {
-                res =  new BiNode<string>(simplifyTree(tree->getRight()));
+                res =  simplifyTree(tree->getRight());
             } else if (tree->getValue() == "^") {
                 res =  new BiNode<string>("1");
             }
