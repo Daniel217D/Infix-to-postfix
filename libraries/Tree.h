@@ -10,7 +10,6 @@ public:
     explicit BiNode(T _value, BiNode<T> *_left = nullptr, BiNode<T> *_right = nullptr) : value(_value), left(_left), right(_right){};
 
     ~BiNode() {
-        delete left;
         delete right;
     }
 

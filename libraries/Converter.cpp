@@ -153,11 +153,17 @@ BiNode<string> *Converter::convertToTree(const string &str_in) {
 }
 
 BiNode<string> *Converter::convertToSimplifiedTree(const string &str_in) {
-    return simplifyTree(convertToTree(str_in));
+    auto tree = convertToTree(str_in);
+    auto sTree = simplifyTree(tree);
+    delete tree;
+    return sTree;
 }
 
 string Converter::simplifyExpression(const string& str_in) {
-    return convertToString(simplifyTree(convertToTree(str_in)));
+    auto sTree = convertToSimplifiedTree(str_in);
+    auto res = convertToString(sTree);
+    delete sTree;
+    return res;
 }
 
 BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSimplification) {
