@@ -162,11 +162,18 @@ string Converter::simplifyExpression(const string& str_in) {
 
 BiNode<string> *Converter::simplifyTree(BiNode<string> *tree, bool removeLastSimplification) {
     BiNode<string> *res = nullptr;
-
     if (isVariable(tree->getValue())) {
         res =  new BiNode<string>(tree->getValue());
+        // Если слева и справа одинаковые переменные для "-" и "/"
+    } else if (isVariable(tree->getLeft()->getValue()) && isVariable(tree->getRight()->getValue()) &&
+               tree->getLeft()->getValue() == tree->getRight()->getValue() &&
+               (tree->getValue() == "-" || tree->getValue() == "/")) {
+        if(tree->getValue() == "-") {
+            res = new BiNode<string>("0");
+        } else if(tree->getValue() == "/") {
+            res = new BiNode<string>("1");
+        }
         //Если справа "0" или "1"
-
     } else if(isNumericalVariable(tree->getLeft()->getValue()) && isNumericalVariable(tree->getRight()->getValue())) {
         int l = strToInt(tree->getLeft()->getValue());
         int r = strToInt(tree->getRight()->getValue());
